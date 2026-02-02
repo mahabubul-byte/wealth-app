@@ -1,8 +1,9 @@
-const CACHE_NAME = "wealth-manager-v1";
+const CACHE_NAME = "wealth-app-v2";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "https://cdn.jsdelivr.net/npm/chart.js"
 ];
 
 self.addEventListener("install", e => {
