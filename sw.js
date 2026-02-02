@@ -1,4 +1,4 @@
-const CACHE_NAME = "v1";
+const CACHE_NAME = "v2"; // Shudhu eikhane v1 ke v2 koro
 const assets = ["./index.html", "./app.webmanifest"];
 
 self.addEventListener("install", (e) => {
