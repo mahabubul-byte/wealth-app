@@ -1,51 +1,63 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Wealth Manager</title>
-   <link rel="manifest" href="./manifest.json?v=1">
+    <title>Wealth Manager Pro</title>
+    <link rel="manifest" href="./manifest.json?v=2">
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #4f46e5; --secondary: #10b981; --dark: #0f172a; --bg: #f3f4f6; }
+        :root { --primary: #4f46e5; --secondary: #10b981; --dark: #0f172a; --bg: #f3f4f6; --danger: #ef4444; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .dashboard { max-width: 600px; margin: auto; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .card { background: var(--dark); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; position: relative; }
+        .dashboard { max-width: 500px; margin: auto; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        /* Income Input Style */
+        .income-card { background: var(--dark); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .income-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .income-header input { width: 80px; background: #1e293b; border: 1px solid #4f46e5; color: white; padding: 5px; border-radius: 5px; text-align: center; font-weight: bold; }
+        
         .balance-label { font-size: 14px; opacity: 0.8; }
-        .balance-amt { font-size: 30px; font-weight: 800; margin: 5px 0; }
+        .balance-amt { font-size: 32px; font-weight: 800; margin: 5px 0; color: #fff; }
+        
         .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; font-size: 13px; }
         
-        .section-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px; color: var(--dark); }
-        .chart-box { height: 250px; margin-bottom: 20px; }
+        .section-title { font-size: 16px; font-weight: bold; margin: 20px 0 10px; color: var(--dark); display: flex; justify-content: space-between; }
+        .chart-box { height: 230px; margin-bottom: 20px; }
         
         .input-ui { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 15px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-export { background: var(--secondary); color: white; }
+        .btn-export { background: #e2e8f0; color: var(--dark); }
         
-        .history-card { margin-top: 20px; max-height: 200px; overflow-y: auto; }
-        .item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .tag { font-size: 10px; padding: 2px 6px; background: #e2e8f0; border-radius: 5px; }
+        .history-card { margin-top: 10px; max-height: 250px; overflow-y: auto; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .item-info { font-size: 14px; }
+        .item-date { font-size: 10px; color: #94a3b8; display: block; }
+        .tag { font-size: 10px; padding: 2px 6px; background: #e2e8f0; border-radius: 5px; margin-left: 5px; }
+        .item-amt { color: var(--danger); font-weight: bold; text-align: right; }
+        .delete-btn { color: #94a3b8; font-size: 12px; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
-    <div class="card">
+    <div class="income-card">
+        <div class="income-header">
+            <span>Budget / Income:</span>
+            <div>৳ <input type="number" id="monthly-income" value="16000" onchange="updateSalary()"></div>
+        </div>
         <div class="balance-label">Current Balance</div>
-        <div class="balance-amt">৳<span id="balance">16000</span></div>
+        <div class="balance-amt">৳<span id="balance">0</span></div>
         <div class="grid-stats">
             <div class="stat-item">Spent: <span id="total-spent">0</span></div>
-            <div class="stat-item">Yearly Forecast: <span id="forecast">0</span></div>
+            <div class="stat-item">Yearly Save: <span id="forecast">0</span></div>
         </div>
     </div>
 
-    <div class="section-title">Expense Distribution</div>
     <div class="chart-box">
         <canvas id="mainChart"></canvas>
     </div>
@@ -64,31 +76,46 @@
         </div>
         <div class="btn-group">
             <button class="btn-main" onclick="addMoney()">Add Expense</button>
-            <button class="btn-export" onclick="exportData()">Export CSV</button>
+            <button class="btn-export" onclick="exportData()">CSV</button>
         </div>
     </div>
 
-    <div class="section-title">Recent Transactions</div>
+    <div class="section-title">
+        Recent Transactions
+        <span id="count" style="font-size: 12px; color: #64748b;"></span>
+    </div>
     <div class="history-card" id="history"></div>
     
-    <button onclick="resetAll()" style="width: 100%; background: none; color: #94a3b8; font-size: 11px; margin-top: 20px; border: none; text-decoration: underline;">Clear Month Data</button>
+    <button onclick="resetAll()" style="width: 100%; background: none; color: #94a3b8; font-size: 11px; margin-top: 20px; border: none; text-decoration: underline;">Clear All Data</button>
 </div>
 
 <script>
-    let salary = 16000;
-    let data = JSON.parse(localStorage.getItem('wealth_data')) || [];
+    let salary = parseFloat(localStorage.getItem('salary_val')) || 16000;
+    let data = JSON.parse(localStorage.getItem('wealth_data_v2')) || [];
     let chart;
+
+    document.getElementById('monthly-income').value = salary;
 
     function init() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         chart = new Chart(ctx, {
-            type: 'polarArea',
+            type: 'doughnut',
             data: {
                 labels: ['Food', 'Rent', 'Investment', 'Utility', 'Others'],
-                datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: ['#6366f199', '#10b98199', '#f59e0b99', '#ef444499', '#94a3b899'] }]
+                datasets: [{ 
+                    data: [0, 0, 0, 0, 0], 
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#94a3b8'],
+                    borderWidth: 0 
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%' }
         });
+        update();
+    }
+
+    function updateSalary() {
+        salary = parseFloat(document.getElementById('monthly-income').value) || 0;
+        localStorage.setItem('salary_val', salary);
         update();
     }
 
@@ -98,12 +125,10 @@
         
         data.forEach(d => { totals[d.cat] += d.amt; spent += d.amt; });
 
-        document.getElementById('balance').innerText = salary - spent;
-        document.getElementById('total-spent').innerText = '৳' + spent;
-        
-        // Yearly Projection (Assuming same spending)
-        let monthlySavings = salary - spent;
-        document.getElementById('forecast').innerText = '৳' + (monthlySavings * 12);
+        document.getElementById('balance').innerText = (salary - spent).toLocaleString();
+        document.getElementById('total-spent').innerText = '৳' + spent.toLocaleString();
+        document.getElementById('forecast').innerText = '৳' + ((salary - spent) * 12).toLocaleString();
+        document.getElementById('count').innerText = data.length + " entries";
 
         chart.data.datasets[0].data = Object.values(totals);
         chart.update();
@@ -111,12 +136,18 @@
         const hist = document.getElementById('history');
         hist.innerHTML = data.slice().reverse().map(i => `
             <div class="item">
-                <div><b>${i.desc}</b> <span class="tag">${i.cat}</span></div>
-                <div style="color:#ef4444">-৳${i.amt}</div>
+                <div class="item-info">
+                    <span class="item-date">${i.date}</span>
+                    <b>${i.desc}</b> <span class="tag">${i.cat}</span>
+                </div>
+                <div class="item-amt">
+                    -৳${i.amt}
+                    <br><button class="delete-btn" onclick="deleteItem(${i.id})">Delete</button>
+                </div>
             </div>
         `).join('');
 
-        localStorage.setItem('wealth_data', JSON.stringify(data));
+        localStorage.setItem('wealth_data_v2', JSON.stringify(data));
     }
 
     function addMoney() {
@@ -124,36 +155,41 @@
         const cat = document.getElementById('cat').value;
         const amt = parseFloat(document.getElementById('amt').value);
         if(desc && amt) {
-            data.push({ desc, cat, amt, date: new Date().toLocaleDateString() });
+            const now = new Date();
+            const timeLabel = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            data.push({ 
+                id: Date.now(), 
+                desc, 
+                cat, 
+                amt, 
+                date: timeLabel 
+            });
             document.getElementById('desc').value = '';
             document.getElementById('amt').value = '';
             update();
         }
     }
 
+    function deleteItem(id) {
+        if(confirm("Delete this transaction?")) {
+            data = data.filter(item => item.id !== id);
+            update();
+        }
+    }
+
     function exportData() {
-        let csv = "Description,Category,Amount,Date\n";
-        data.forEach(i => csv += `${i.desc},${i.cat},${i.amt},${i.date}\n`);
+        let csv = "Date,Description,Category,Amount\n";
+        data.forEach(i => csv += `${i.date},${i.desc},${i.cat},${i.amt}\n`);
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'expenses.csv';
-        a.click();
+        a.href = url; a.download = 'Wealth_Report.csv'; a.click();
     }
 
-    function resetAll() { if(confirm("Nutan mash shuru korben?")) { data = []; update(); } }
+    function resetAll() { if(confirm("Are you sure you want to reset all data?")) { data = []; update(); } }
 
     init();
 </script>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("Service Worker OK"))
-    .catch(err => console.log("Service Worker Error", err));
-}
-</script>
-
 </body>
-
 </html>
